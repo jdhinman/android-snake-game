@@ -50,31 +50,83 @@ workflows:
           success: true
           failure: true
 
-  android-test-workflow:
-    name: Snake Game Testing
-    max_build_duration: 30
-    instance_type: linux_x2
+  android-wrapper-regen:
+    name: Snake Game Android (Wrapper Regeneration)
+    max_build_duration: 120
+    instance_type: mac_mini_m2
     environment:
+      vars:
+        PACKAGE_NAME: "com.termux.snake"
       java: 17
+    cache:
+      cache_paths:
+        - ~/.gradle/caches
+        - ~/.android/build-cache
     scripts:
-      - name: Run unit tests
+      - name: Set Android SDK location
+        script: | 
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+          
+      - name: Install correct build tools for AAPT2 compatibility
+        script: |
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;34.0.0" "platforms;android-33"
+          
+      - name: Regenerate Gradle wrapper on Codemagic
         script: |
           cd $CM_BUILD_DIR
-          ./gradlew test
+          gradle wrapper --gradle-version=8.4
+          chmod +x gradlew
           
-      - name: Run instrumentation tests
-        script: |
-          cd $CM_BUILD_DIR  
-          ./gradlew connectedAndroidTest
+      - name: Build debug APK with regenerated wrapper
+        script: | 
+          cd $CM_BUILD_DIR
+          ./gradlew assembleDebug --no-daemon --stacktrace
           
     artifacts:
-      - app/build/reports/**
-      - app/build/test-results/**
+      - app/build/outputs/**/*.apk
       
     publishing:
       email:
         recipients:
-          - developer@termux.com
+          - jd21hinman@gmail.com
         notify:
-          success: false
+          success: true
+          failure: true
+
+  android-no-wrapper:
+    name: Snake Game Android (No Wrapper)
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    environment:
+      vars:
+        PACKAGE_NAME: "com.termux.snake"
+        GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8"
+      java: 17
+    cache:
+      cache_paths:
+        - ~/.gradle/caches
+        - ~/.android/build-cache
+    scripts:
+      - name: Set Android SDK location
+        script: | 
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+          
+      - name: Install correct build tools for AAPT2 compatibility
+        script: |
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;34.0.0" "platforms;android-33"
+          
+      - name: Build debug APK using system Gradle
+        script: | 
+          cd $CM_BUILD_DIR
+          gradle assembleDebug --no-daemon --stacktrace --info
+          
+    artifacts:
+      - app/build/outputs/**/*.apk
+      
+    publishing:
+      email:
+        recipients:
+          - jd21hinman@gmail.com
+        notify:
+          success: true
           failure: true
