@@ -29,14 +29,23 @@ workflows:
         script: |
           $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;34.0.0" "platforms;android-33"
           
-      - name: Debug wrapper and build
-        script: | 
+      - name: Ensure Gradle Wrapper and Build
+        script: |
           cd $CM_BUILD_DIR
-          echo "=== Debugging Gradle Wrapper Issue ==="
+          echo "=== Ensuring Gradle Wrapper and Building ==="
           echo "Current directory: $(pwd)"
-          echo "Gradle wrapper jar exists: $(ls -la gradle/wrapper/gradle-wrapper.jar)"
+
+          if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+            echo "Gradle wrapper jar not found. Regenerating..."
+            gradle wrapper --gradle-version=8.4
+            chmod +x gradlew
+            echo "Gradle wrapper regenerated."
+          else
+            echo "Gradle wrapper jar exists."
+          fi
+
           echo "Gradlew script exists: $(ls -la gradlew)"
-          echo "Trying system Gradle first..."
+          echo "Attempting build with gradlew..."
           ./gradlew assembleDebug --no-daemon --stacktrace
           
     artifacts:
