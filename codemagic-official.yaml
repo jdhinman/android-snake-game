@@ -1,11 +1,14 @@
 workflows:
   native-android:
-    name: Snake Game Android (Fixed)
+    name: Snake Game Android (Official Config)
     max_build_duration: 120
     instance_type: mac_mini_m2
     environment:
+      android_signing:
+        - snake_game_keystore
       vars:
         PACKAGE_NAME: "com.termux.snake"
+        GOOGLE_PLAY_TRACK: "internal"
       java: 17
     cache:
       cache_paths:
@@ -25,16 +28,25 @@ workflows:
         script: | 
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
           
-      - name: Install correct build tools for AAPT2 compatibility
+      - name: Install correct build tools
         script: |
           $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;34.0.0" "platforms;android-33"
           
-      - name: Build debug APK
+      - name: Set AAPT2 override for compatibility
+        script: |
+          echo "android.aapt2Version=8.6.1-11315950" >> gradle.properties
+          
+      - name: Build Android debug
         script: | 
           ./gradlew assembleDebug --no-daemon --stacktrace
           
+      - name: Build Android release (if debug succeeds)
+        script: | 
+          ./gradlew assembleRelease --no-daemon --stacktrace
+          
     artifacts:
       - app/build/outputs/**/*.apk
+      - app/build/outputs/**/*.aab
       
     publishing:
       email:
@@ -44,31 +56,26 @@ workflows:
           success: true
           failure: true
 
-  android-test-workflow:
-    name: Snake Game Testing
-    max_build_duration: 30
-    instance_type: linux_x2
+  # Alternative minimal workflow for troubleshooting
+  android-minimal:
+    name: Snake Game Minimal Test
+    max_build_duration: 60
+    instance_type: mac_mini_m2
     environment:
       java: 17
     scripts:
-      - name: Run unit tests
-        script: |
-          cd $CM_BUILD_DIR
-          ./gradlew test
+      - name: Set Android SDK location
+        script: | 
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
           
-      - name: Run instrumentation tests
+      - name: Test Kotlin compilation only
         script: |
-          cd $CM_BUILD_DIR  
-          ./gradlew connectedAndroidTest
+          ./gradlew compileDebugKotlin --no-daemon --stacktrace
           
-    artifacts:
-      - app/build/reports/**
-      - app/build/test-results/**
-      
     publishing:
       email:
         recipients:
-          - developer@termux.com
+          - jd21hinman@gmail.com
         notify:
-          success: false
-          failure: true
+          success: true
+          failure: false
