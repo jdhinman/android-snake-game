@@ -1,0 +1,37 @@
+workflows:
+  android-minimal:
+    name: Snake Game Minimal Build
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      java: 17
+      vars:
+        GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m -XX:MaxPermSize=512m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"
+    cache:
+      cache_paths:
+        - ~/.gradle/caches
+    scripts:
+      - name: Set up local.properties
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+          
+      - name: Download dependencies only
+        script: |
+          cd $CM_BUILD_DIR
+          gradle dependencies --configuration=debugCompileClasspath
+          
+      - name: Build debug APK (minimal config)
+        script: |
+          cd $CM_BUILD_DIR
+          gradle assembleDebug --offline --no-daemon --stacktrace --info
+          
+    artifacts:
+      - app/build/outputs/**/*.apk
+      
+    publishing:
+      email:
+        recipients:
+          - jd21hinman@gmail.com
+        notify:
+          success: true
+          failure: true

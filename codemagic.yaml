@@ -28,19 +28,14 @@ workflows:
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
           
-      - name: Check Gradle installation
+      - name: Install Android SDK 33
         script: |
-          gradle --version
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-33" "build-tools;33.0.1"
           
-      - name: Build debug APK with system Gradle
+      - name: Build debug APK
         script: |
           cd $CM_BUILD_DIR
-          gradle assembleDebug --stacktrace --info
-          
-      - name: Build release APK (unsigned)
-        script: |
-          cd $CM_BUILD_DIR
-          gradle assembleRelease --stacktrace
+          gradle assembleDebug --no-daemon --stacktrace
           
     artifacts:
       - app/build/outputs/**/*.apk
