@@ -2,14 +2,10 @@ workflows:
   android-workflow:
     name: Snake Game Android Build
     max_build_duration: 60
-    instance_type: mac_mini
+    instance_type: linux_x2
     environment:
-      android_signing:
-        - snake_game_keystore
       vars:
         PACKAGE_NAME: "com.termux.snake"
-        GOOGLE_PLAY_TRACK: "internal"
-      flutter: default
       java: 17
     cache:
       cache_paths:
@@ -37,38 +33,21 @@ workflows:
           cd $CM_BUILD_DIR
           ./gradlew assembleDebug
           
-      - name: Build release APK  
+      - name: Build release APK (unsigned)
         script: |
           cd $CM_BUILD_DIR
           ./gradlew assembleRelease
           
-      - name: Build Android App Bundle
-        script: |
-          cd $CM_BUILD_DIR
-          ./gradlew bundleRelease
-          
     artifacts:
       - app/build/outputs/**/*.apk
-      - app/build/outputs/**/*.aab
-      - app/build/outputs/**/mapping.txt
       
     publishing:
       email:
         recipients:
-          - developer@termux.com
+          - jd21hinman@gmail.com
         notify:
           success: true
           failure: true
-      slack:
-        channel: '#android-builds'
-        notify_on_build_start: true
-        notify:
-          success: true
-          failure: true
-      google_play:
-        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
-        track: $GOOGLE_PLAY_TRACK
-        submit_as_draft: true
 
   android-test-workflow:
     name: Snake Game Testing
