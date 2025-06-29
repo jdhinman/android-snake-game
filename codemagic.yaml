@@ -37,7 +37,7 @@ workflows:
           echo "Gradle wrapper jar exists: $(ls -la gradle/wrapper/gradle-wrapper.jar)"
           echo "Gradlew script exists: $(ls -la gradlew)"
           echo "Trying system Gradle first..."
-          gradle assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon --stacktrace
           
     artifacts:
       - app/build/outputs/**/*.apk
