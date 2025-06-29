@@ -29,9 +29,15 @@ workflows:
         script: |
           $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;34.0.0" "platforms;android-33"
           
-      - name: Build debug APK
+      - name: Debug wrapper and build
         script: | 
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          cd $CM_BUILD_DIR
+          echo "=== Debugging Gradle Wrapper Issue ==="
+          echo "Current directory: $(pwd)"
+          echo "Gradle wrapper jar exists: $(ls -la gradle/wrapper/gradle-wrapper.jar)"
+          echo "Gradlew script exists: $(ls -la gradlew)"
+          echo "Trying system Gradle first..."
+          gradle assembleDebug --no-daemon --stacktrace
           
     artifacts:
       - app/build/outputs/**/*.apk
