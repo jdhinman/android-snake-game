@@ -28,19 +28,19 @@ workflows:
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
           
-      - name: Make gradlew executable
+      - name: Check Gradle installation
         script: |
-          chmod +x "$CM_BUILD_DIR/gradlew"
+          gradle --version
           
-      - name: Build debug APK
+      - name: Build debug APK with system Gradle
         script: |
           cd $CM_BUILD_DIR
-          ./gradlew assembleDebug --stacktrace --info
+          gradle assembleDebug --stacktrace --info
           
       - name: Build release APK (unsigned)
         script: |
           cd $CM_BUILD_DIR
-          ./gradlew assembleRelease --stacktrace
+          gradle assembleRelease --stacktrace
           
     artifacts:
       - app/build/outputs/**/*.apk
