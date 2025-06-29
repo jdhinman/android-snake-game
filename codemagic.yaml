@@ -29,24 +29,37 @@ workflows:
         script: |
           $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;34.0.0" "platforms;android-33"
           
-      - name: Ensure Gradle Wrapper and Build
+      - name: Debugging and Build
         script: |
+          set -x # Enable shell debugging
           cd $CM_BUILD_DIR
-          echo "=== Ensuring Gradle Wrapper and Building ==="
+          echo "=== Starting Debugging and Build Process ==="
           echo "Current directory: $(pwd)"
+          ls -laR . # List all files recursively in the project root
 
+          echo "--- Checking Gradle Wrapper ---"
           if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
-            echo "Gradle wrapper jar not found. Regenerating..."
-            gradle wrapper --gradle-version=8.4
-            chmod +x gradlew
-            echo "Gradle wrapper regenerated."
+            echo "Gradle wrapper jar not found. Attempting to regenerate..."
+            # Check if 'gradle' command is available
+            if command -v gradle &> /dev/null; then
+              gradle wrapper --gradle-version=8.4
+              chmod +x gradlew
+              echo "Gradle wrapper regeneration command executed."
+            else
+              echo "Error: 'gradle' command not found. Cannot regenerate wrapper."
+              exit 1 # Exit if gradle command is not available
+            fi
           else
             echo "Gradle wrapper jar exists."
           fi
 
-          echo "Gradlew script exists: $(ls -la gradlew)"
-          echo "Attempting build with gradlew..."
+          echo "--- After Wrapper Check ---"
+          ls -la gradle/wrapper/ # List contents of gradle/wrapper
+          ls -la gradlew # List gradlew script
+
+          echo "--- Attempting Build ---"
           ./gradlew assembleDebug --no-daemon --stacktrace
+          echo "=== Build Attempt Finished ==="
           
     artifacts:
       - app/build/outputs/**/*.apk
