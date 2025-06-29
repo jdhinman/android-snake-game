@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Snake Game</string>
+    <string name="game_over">Game Over!</string>
+    <string name="score">Score: %1$d</string>
+    <string name="high_score">High Score: %1$d</string>
+    <string name="play_again">Play Again</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
+</resources>

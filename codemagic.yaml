@@ -1,0 +1,100 @@
+workflows:
+  android-workflow:
+    name: Snake Game Android Build
+    max_build_duration: 60
+    instance_type: mac_mini
+    environment:
+      android_signing:
+        - snake_game_keystore
+      vars:
+        PACKAGE_NAME: "com.termux.snake"
+        GOOGLE_PLAY_TRACK: "internal"
+      flutter: default
+      java: 17
+    cache:
+      cache_paths:
+        - ~/.gradle/caches
+        - ~/.android/build-cache
+    triggering:
+      events:
+        - push
+        - tag
+        - pull_request
+      branch_patterns:
+        - pattern: 'main'
+          include: true
+          source: true
+        - pattern: 'develop'
+          include: true
+          source: true
+    scripts:
+      - name: Set up local.properties
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+          
+      - name: Build debug APK
+        script: |
+          cd $CM_BUILD_DIR
+          ./gradlew assembleDebug
+          
+      - name: Build release APK  
+        script: |
+          cd $CM_BUILD_DIR
+          ./gradlew assembleRelease
+          
+      - name: Build Android App Bundle
+        script: |
+          cd $CM_BUILD_DIR
+          ./gradlew bundleRelease
+          
+    artifacts:
+      - app/build/outputs/**/*.apk
+      - app/build/outputs/**/*.aab
+      - app/build/outputs/**/mapping.txt
+      
+    publishing:
+      email:
+        recipients:
+          - developer@termux.com
+        notify:
+          success: true
+          failure: true
+      slack:
+        channel: '#android-builds'
+        notify_on_build_start: true
+        notify:
+          success: true
+          failure: true
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: $GOOGLE_PLAY_TRACK
+        submit_as_draft: true
+
+  android-test-workflow:
+    name: Snake Game Testing
+    max_build_duration: 30
+    instance_type: linux_x2
+    environment:
+      java: 17
+    scripts:
+      - name: Run unit tests
+        script: |
+          cd $CM_BUILD_DIR
+          ./gradlew test
+          
+      - name: Run instrumentation tests
+        script: |
+          cd $CM_BUILD_DIR  
+          ./gradlew connectedAndroidTest
+          
+    artifacts:
+      - app/build/reports/**
+      - app/build/test-results/**
+      
+    publishing:
+      email:
+        recipients:
+          - developer@termux.com
+        notify:
+          success: false
+          failure: true
