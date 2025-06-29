@@ -58,6 +58,16 @@ workflows:
           ls -la gradlew # List gradlew script
 
           echo "--- Attempting Build ---"
+          echo "--- Checking AAPT2 Version ---"
+          # Find aapt2 executable and print its version
+          AAPT2_PATH="$(find $ANDROID_SDK_ROOT -name aapt2 -type f | head -n 1)"
+          if [ -n "$AAPT2_PATH" ]; then
+            echo "Found aapt2 at: $AAPT2_PATH"
+            "$AAPT2_PATH" version
+          else
+            echo "AAPT2 executable not found in Android SDK."
+          fi
+          echo "--- Attempting build with gradlew..."
           ./gradlew assembleDebug --no-daemon --stacktrace
           echo "=== Build Attempt Finished ==="
           
